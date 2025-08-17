@@ -1,0 +1,25 @@
+FROM node:20.12.2-alpine
+
+RUN addgroup -g 1001 -S appgroup && \
+    adduser -u 1001 -S appuser -G appgroup && \
+    mkdir -p /app/node_modules && \
+    chown -R appuser:appgroup /app
+
+WORKDIR /app
+
+COPY --chown=appuser:appgroup package.json package-lock.json ./
+
+USER appuser
+RUN npm ci --omit=optional
+
+COPY --chown=appuser:appgroup . .
+
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=development
+
+RUN mkdir -p .next/cache && \
+    chmod -R 777 .next/cache && \
+    chmod -R 777 /app/node_modules
+
+EXPOSE 3000
+CMD ["npm", "run", "dev"]
